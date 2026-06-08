@@ -20,33 +20,36 @@ public class AIService {
     private final ApplicationConfig config;
 
     public String askAI (String message) {
-        
-       try {
-        HttpClient client = HttpClient.newHttpClient();
-
-        String body = """
-        {
-            "model": "qwen3.6-27b",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "%s"
-                }
-            ]
+        if (message == null || message.trim().isEmpty()) {
+            return "Please provide a valid message.";
         }
-        """.formatted(message);
+        
+        try {
+            HttpClient client = HttpClient.newHttpClient();
 
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(config.getBasePath()))
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer " + config.getApiKey())
-            .POST(HttpRequest.BodyPublishers.ofString(body))
-            .build();
+            String body = """
+            {
+                "model": "qwen3.6-27b",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "%s"
+                    }
+                ]
+            }
+            """.formatted(message);
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(config.getBasePath()))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + config.getApiKey())
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
 
-        JsonNode root = new ObjectMapper().readTree(response.body());
-        return root.path("choices").get(0).path("message").path("content").asText();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            JsonNode root = new ObjectMapper().readTree(response.body());
+            return root.path("choices").get(0).path("message").path("content").asText();
 
         } catch (Exception e) {
             return "Error processing the request: " + e.getMessage();
